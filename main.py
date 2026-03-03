@@ -63,11 +63,11 @@ async def handle_token(message: types.Message):
         finally: db.close()
 
 # --- USER BOTLAR UCHUN WEBHOOK --
-    async def user_bot_webhook(request):
+async def user_bot_webhook(request):
+    # Diqqat! Bu qatordan boshlab hammasi 4 ta probel o'ngda bo'lishi shart
     token = request.match_info.get('token')
     data = await request.json()
     
-    # Sessiyani xavfsiz ochish va yopish
     async with Bot(token=token).context() as u_bot:
         update = types.Update.to_object(data)
         if update.message:
