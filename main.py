@@ -74,3 +74,20 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
     )
+# Bu funksiya har bir foydalanuvchi botidan kelgan xabarni qayta ishlaydi
+async def handle_user_bot_update(token, update_data):
+    try:
+        user_bot = Bot(token=token)
+        update = types.Update.to_object(update_data)
+        
+        if update.message:
+            # Bu yerda kino bot mantiqi bo'ladi
+            await user_bot.send_message(
+                update.message.chat.id, 
+                f"Salom! Men {token[:10]}... botiman. Tez orada bu yerda kinolar bo'ladi!"
+            )
+        await user_bot.close()
+    except Exception as e:
+        logging.error(f"User bot xatosi: {e}")
+
+# Lekin aiogram 2.x da start_webhook buni bitta portda qilishni qiyinlashtiradi.
