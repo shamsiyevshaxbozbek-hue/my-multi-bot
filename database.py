@@ -42,7 +42,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # SHU YERGA NUSXALAB OLGAN URI MANZILINGNI QO'Y
-DATABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@db.jfpvrhgtvlcixosjrijo.supabase.co:5432/postgres"
+DATABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@db.jfpvrhgtvlcixosjrijo.supabase.co:6543/postgres"
 
 Base = declarative_base()
 engine = create_engine(DATABASE_URL)
