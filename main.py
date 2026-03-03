@@ -4,8 +4,8 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from database import SessionLocal, CreatedBot
 
-TOKEN = "MASTER_BOT_TOKEN"
-BASE_URL = "https://sizning-linkigiz.onrender.com" # Render linki
+TOKEN = "8639736341:AAGaGauSNS4cTC-xNZxHsB0NS0A6BXnaekU"
+BASE_URL = "https://my-multi-bot.onrender.com" # Render linki
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
