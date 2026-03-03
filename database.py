@@ -42,7 +42,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # SHU YERGA NUSXALAB OLGAN URI MANZILINGNI QO'Y
-DATABASE_URL = postgresql://postgres:Shaxbozbek5525@db.jfpvrhgtvlcixosjrijo.supabase.co:5432/postgres
+DATABASE_URL = "postgresql://neondb_owner:npg_MtZ9EVoXFj7i@ep-old-term-aim34jwn-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 Base = declarative_base()
 engine = create_engine(DATABASE_URL)
