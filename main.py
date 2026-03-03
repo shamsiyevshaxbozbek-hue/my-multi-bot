@@ -1,39 +1,89 @@
 import os
-from aiohttp import web
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from database import SessionLocal, CreatedBot
+import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils import executor
+from database import SessionLocal, CreatedBot, init_db
 
-TOKEN = "8639736341:AAGaGauSNS4cTC-xNZxHsB0NS0A6BXnaekU"
-BASE_URL = "https://my-multi-bot.onrender.com" # Render linki
+# 1. SOZLAMALAR
+# Bot tokeningiz va Render manzilingiz
+API_TOKEN = '8639736341:AAGaGauSNS4cTC-xNZxHsB0NS0A6BXnaekU'
+RENDER_URL = "https://my-multi-bot.onrender.com"
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+# Loggingni faollashtirish (xatolarni ko'rish uchun)
+logging.basicConfig(level=logging.INFO)
 
-# Har bir bot uchun alohida Dispatcher-larni saqlash
-bot_dispatchers = {}
+# Bot va Dispatcher ob'ektlari
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
-@dp.message(F.text == "/start")
-async def cmd_start(message: types.Message):
-    await message.answer("Xush kelibsiz! Bot yaratish uchun tokenni yuboring.")
+# Ma'lumotlar bazasini tayyorlash
+init_db()
 
-# Bu funksiya Telegramdan kelgan har bir xabarni tekshiradi
-async def handle_webhook(request):
-    token = request.match_info.get('token')
-    # Xabar qaysi botga kelganini aniqlaymiz va javob beramiz
-    # (Bu yerda murakkab mantiq bo'ladi, hozircha master botni yoqamiz)
-    return web.Response(text="OK")
+# --- HANDLERLAR ---
 
-def main():
-    app = web.Application()
-    # Webhook yo'li
-    handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
-    handler.register(app, path=f"/webhook/{TOKEN}")
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    """Start buyrug'i uchun javob"""
+    await message.reply(
+        "👋 Salom! Men Master Botman.\n"
+        "Menga yangi bot tokenini yuboring, men uni Neon bazasiga saqlayman."
+    )
+
+@dp.message_handler()
+async def save_token(message: types.Message):
+    """Kelgan tokenni tekshirish va bazaga saqlash"""
+    token = message.text.strip()
     
-    setup_application(app, dp, bot=bot)
-    
-    port = int(os.environ.get("PORT", 8080))
-    web.run_app(app, host="0.0.0.0", port=port)
+    # Token formatini tekshirish
+    if ":" in token and len(token) > 20:
+        db = SessionLocal()
+        try:
+            # Token avval saqlanmaganligini tekshirish
+            check_bot = db.query(CreatedBot).filter(CreatedBot.token == token).first()
+            if check_bot:
+                await message.reply("⚠️ Bu token allaqachon bazada bor!")
+            else:
+                new_bot = CreatedBot(
+                    owner_id=message.from_user.id,
+                    token=token,
+                    bot_type="kino"
+                )
+                db.add(new_bot)
+                db.commit()
+                await message.reply("✅ Token muvaffaqiyatli saqlandi!")
+        except Exception as e:
+            db.rollback()
+            logging.error(f"Baza xatosi: {e}")
+            await message.reply("❌ Bazaga yozishda xatolik yuz berdi.")
+        finally:
+            db.close()
+    else:
+        await message.reply("⚠️ Bu to'g'ri bot tokeni emas!")
 
-if __name__ == "__main__":
-    main()
+# --- WEBHOOK SOZLAMALARI ---
+
+async def on_startup(dp):
+    """Bot yurganda webhookni Telegramga bildirish"""
+    await bot.set_webhook(f"{RENDER_URL}/webhook")
+    logging.info("Webhook o'rnatildi")
+
+async def on_shutdown(dp):
+    """Bot to'xtaganda webhookni o'chirish"""
+    await bot.delete_webhook()
+    logging.info("Webhook o'chirildi")
+
+if __name__ == '__main__':
+    # Render portni dinamik beradi, 10000 - standart port
+    port = int(os.environ.get("PORT", 10000))
+    
+    executor.start_webhook(
+        dispatcher=dp,
+        webhook_path='/webhook',
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        skip_updates=True,
+        host='0.0.0.0',
+        port=port,
+    )
