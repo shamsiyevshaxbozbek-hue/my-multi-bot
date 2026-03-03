@@ -37,3 +37,28 @@ async def add_user(user_id):
     async with aiosqlite.connect('main_data.db') as db:
         await db.execute('INSERT OR IGNORE INTO users (user_id) VALUES (?)', (user_id,))
         await db.commit()
+from sqlalchemy import create_engine, Column, Integer, String, BigInteger
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+# SHU YERGA NUSXALAB OLGAN URI MANZILINGNI QO'Y
+DATABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@db.jfpvrhgtvlcixosjrijo.supabase.co:5432/postgres"
+
+Base = declarative_base()
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
+
+class BotUser(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, unique=True)
+
+class CreatedBot(Base):
+    __tablename__ = "user_bots"
+    id = Column(Integer, primary_key=True)
+    owner_id = Column(BigInteger)
+    token = Column(String, unique=True)
+    bot_type = Column(String)
+
+# Jadvallarni Supabase'da yaratish
+Base.metadata.create_all(bind=engine)
