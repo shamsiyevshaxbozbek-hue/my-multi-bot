@@ -62,22 +62,18 @@ async def handle_token(message: types.Message):
             await message.reply("❌ Xato: Bu token allaqachon foydalanilgan.")
         finally: db.close()
 
-# --- USER BOTLAR UCHUN WEBHOOK ---
-async def user_bot_webhook(request):
+# --- USER BOTLAR UCHUN WEBHOOK --
+    async def user_bot_webhook(request):
     token = request.match_info.get('token')
     data = await request.json()
-    u_bot = Bot(token=token)
-    update = types.Update.to_object(data)
     
-    if update.message:
-        await u_bot.send_message(
-            update.message.chat.id, 
-            "🎬 Salom! Men sizning Kino botingizman. Tez orada ishga tushaman!"
-        )
+    # Sessiyani xavfsiz ochish va yopish
+    async with Bot(token=token).context() as u_bot:
+        update = types.Update.to_object(data)
+        if update.message:
+            await u_bot.send_message(update.message.chat.id, "🎬 Kino botingiz xizmatga tayyor!")
     
-    await u_bot.close()
     return web.Response(text="ok")
-
 # --- SERVERNI ISHGA TUSHIRISH ---
 async def on_startup(app):
     init_db() # Ma'lumotlar bazasini ishga tushirish
