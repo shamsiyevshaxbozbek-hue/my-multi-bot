@@ -64,14 +64,23 @@ async def handle_token(message: types.Message):
 
 # --- USER BOTLAR UCHUN WEBHOOK --
 async def user_bot_webhook(request):
-    # Diqqat! Bu qatordan boshlab hammasi 4 ta probel o'ngda bo'lishi shart
     token = request.match_info.get('token')
-    data = await request.json()
-    
-    async with Bot(token=token).context() as u_bot:
+    try:
+        data = await request.json()
+        # Bot ob'ektini yaratamiz
+        u_bot = Bot(token=token)
         update = types.Update.to_object(data)
+        
         if update.message:
+            # Xabarga javob qaytarish
             await u_bot.send_message(update.message.chat.id, "🎬 Kino botingiz xizmatga tayyor!")
+        
+        # Muhim: Sessiyani yopamiz
+        session = await u_bot.get_session()
+        await session.close()
+        
+    except Exception as e:
+        logging.error(f"Webhook xatosi: {e}")
     
     return web.Response(text="ok")
 # --- SERVERNI ISHGA TUSHIRISH ---
